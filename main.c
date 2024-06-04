@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <sys/types.h>
 
 #define NUM_DIGITS 15
 #define MAX_NAME_LENGTH 100
@@ -47,43 +48,95 @@ void insertUser(char *id, const char *name, int age, double balance)
         fprintf(stderr, "Erro ao salvar dados");
         return;
     }
-    fprintf(file, "\"%s\" \"%s\" \"%d\" \"%.2f\"\n", id, name, age, balance);
+    fprintf(file, "ID\"%s\" \"%s\" \"%d\" \"%.2f\"\n", id, name, age, balance);
     fclose(file);
 }
 
-void getUserById(const char *id)
+// void getUserById(const char *id)
+// {
+//     FILE *file = fopen(FILE_NAME, "r");
+//     if (file == NULL)
+//     {
+//         printf("Erro ao abrir o arquivo.\n");
+//         return;
+//     }
+
+//     char line[1024];
+//     char currentId[16];
+//     char name[101];
+//     int age;
+//     double balance;
+
+//     while (fgets(line, sizeof(line), file))
+//     {
+//         if (sscanf(line, "\"%15[^\"]\" \"%100[^\"]\" %d \"%lf\"", currentId, name, &age, &balance) == 4)
+//         {
+//             if (strcmp(currentId, id) == 0)
+//             {
+//                 printf("ID: %s\n", currentId);
+//                 printf("Nome: %s\n", name);
+//                 printf("Idade: %d\n", age);
+//                 printf("Saldo: %.2f\n", balance);
+//                 fclose(file);
+//                 free(line);
+//                 return;
+//             }
+
+//         }
+//     }
+
+//     free(line);
+//     printf("ID não encontrado.\n");
+//     fclose(file);
+// }
+
+void findWord(const char *id)
 {
-    FILE *file = fopen(FILE_NAME, "r");
-    if (file == NULL)
+    FILE *fp = fopen(FILE_NAME, "r");
+    if (fp == NULL)
     {
-        perror("Erro ao abrir o arquivo");
+        printf("Erro ao abrir o arquivo.\n");
         return;
     }
 
-    char line[256];
-    while (fgets(line, sizeof(line), file))
-    {
-        char currentId[NUM_DIGITS + 1];
-        char name[MAX_NAME_LENGTH + 1];
-        int age;
-        double balance;
+    char line[1024];
+    char currentId[NUM_DIGITS + 3]; // +3 para as aspas e o caractere nulo
 
-        if (sscanf(line, "\"%15[^\"]\" \"%100[^\"]\" %d \"%lf\"", currentId, name, &age, &balance) == 4)
+    // Loop através das linhas do arquivo
+    while (fgets(line, sizeof(line), fp) != NULL)
+    {
+        int i = 0;
+        int j = 0;
+        int idFound = 0;
+        printf("%s \n", line);
+
+        // Iterar através da linha para encontrar o ID
+        while (line[i] != '\0')
         {
-            if (strcmp(currentId, id) == 0)
+            if (line[i] == '"' && line[i + 1] == 'I' && line[i + 2] == 'D')
             {
-                printf("ID: %s\n", currentId);
-                printf("Nome: %s\n", name);
-                printf("Idade: %d\n", age);
-                printf("Saldo: %.2f\n", balance);
-                fclose(file);
-                return;
+                i += 3; // Ignorar "ID"
+                while (line[i] >= '0' && line[i] <= '9' && j < NUM_DIGITS)
+                {
+                    currentId[j++] = line[i++];
+                }
+                currentId[j] = '\0'; // Adicionar o caractere nulo no final
+                idFound = 1;
+                break;
             }
+            i++;
+        }
+
+        // Comparar com o ID fornecido
+        if (idFound && strcmp(currentId, id) == 0)
+        {
+            printf("%s", line);
+            fclose(fp);
+            return;
         }
     }
-
-    printf("Usuario com ID \"%s\" nao encontrado\n", id);
-    fclose(file);
+    printf("ID nao encontrado.\n");
+    fclose(fp);
 }
 
 void getUserDetails(char *name, int *age, double *balance)
@@ -158,7 +211,7 @@ int main()
     char searchId[NUM_DIGITS + 1];
     printf("Digite o ID do usuario que deseja buscar: ");
     scanf("%15s", searchId);
-    getUserById(searchId);
+    findWord(searchId);
 
     return 0;
 }
