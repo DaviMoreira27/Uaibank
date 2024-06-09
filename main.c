@@ -6,7 +6,12 @@
 
 #define NUM_DIGITS 15
 #define MAX_NAME_LENGTH 100
-#define FILE_NAME "uaibank.txt"
+#define FILE_NAME "../uaibank.txt"
+
+// TODO: Fazer uma função para armazenar as mensagens de saída e exibi-las
+// TODO: Desenvolver a função de transferência
+// TODO: Analisar mais casos de erro
+// TODO: Fazer o menu da aplicação
 
 int isNameValid(const char *name)
 {
@@ -48,7 +53,7 @@ void insertUser(char *id, const char *name, int age, double balance)
         fprintf(stderr, "Erro ao salvar dados");
         return;
     }
-    fprintf(file, "ID\"%s\" \"%s\" \"%d\" \"%.2f\"\n", id, name, age, balance);
+    fprintf(file, "\"%s\" \"%s\" \"%d\" \"%.2f\"\n", id, name, age, balance);
     fclose(file);
 }
 
@@ -70,12 +75,9 @@ void getUserById(const char *id)
     while (fgets(line, sizeof(line), file))
 
     {
-      if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
         {
 
-          // ESTA FUNCIONANDO ESSA BUDEGA, POREM É NECESSARIO CORRIGIR A FORMA DE RECEBIMENTO DO ID
-          printf("%s \n", currentId);
-          printf("%s \n", id);
             if (strcmp(currentId, id) == 0)
             {
                 printf("ID: %s\n", currentId);
@@ -85,7 +87,6 @@ void getUserById(const char *id)
                 fclose(file);
                 return;
             }
-
         }
     }
 
@@ -93,6 +94,95 @@ void getUserById(const char *id)
     fclose(file);
 }
 
+// void deleteUser(const char *id)
+// {
+//     FILE *file = fopen(FILE_NAME, "r+");
+//     if (file == NULL)
+//     {
+//         printf("Erro ao abrir o arquivo.\n");
+//         return;
+//     }
+
+//     char line[1024];
+//     char currentId[16];
+//     char name[101];
+//     int age;
+//     double balance;
+
+//     while (fgets(line, sizeof(line), file))
+
+//     {
+//         if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
+//         {
+
+//             if (strcmp(currentId, id) == 0)
+//             {
+//                 fprintf(file, "asd");
+//                 fclose(file);
+//                 printf("Usuario %s removido com sucesso", currentId);
+//                 return;
+//             }
+//         }
+//     }
+
+//     printf("ID não encontrado.\n");
+//     fclose(file);
+// }
+
+void deleteUser(const char *id)
+{
+    FILE *file = fopen(FILE_NAME, "r");
+    if (file == NULL)
+    {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
+    }
+
+    FILE *tempFile = fopen("temp.txt", "w");
+    if (tempFile == NULL)
+    {
+        //Erro ao criar o arquivo temporario, devido a permissões por exemplo
+        printf("Erro ao excluir ao usuário.\n");
+        fclose(file);
+        return;
+    }
+
+    char line[1024];
+    char currentId[16];
+    char name[101];
+    int age;
+    double balance;
+
+    int found = 0;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
+        {
+            if (strcmp(currentId, id) == 0)
+            {
+                found = 1;
+            }else{
+                fputs(line, tempFile);
+            }
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(FILE_NAME);
+        rename("temp.txt", FILE_NAME);
+        printf("Usuario %s removido com sucesso.\n", id);
+    }
+    else
+    {
+        remove("temp.txt");
+        printf("ID %s nao encontrado.\n", id);
+    }
+}
 
 void getUserDetails(char *name, int *age, double *balance)
 {
@@ -148,21 +238,45 @@ int insertMultiplesUsersMenu()
         }
 
         insertUser(id, name, age, balance);
-
         free(id);
-        return 0;
     }
 
     return 0;
 }
 
-
 int main()
 {
+    //! Search for user
+    // char searchId[NUM_DIGITS + 1];
+    // printf("Digite o ID do usuario que deseja buscar: ");
+    // scanf("%15s", searchId);
+    // getUserById(searchId);
+
+    //! Insert User
+    // char name[MAX_NAME_LENGTH + 1];
+    // int age;
+    // double balance;
+
+    // getUserDetails(name, &age, &balance);
+
+    // char *id = randomId();
+    // if (id == NULL)
+    // {
+    //     fprintf(stderr, "Erro ao gerar ID para o usuario\n");
+    //     return 1;
+    // }
+
+    // insertUser(id, name, age, balance);
+    // free(id);
+
+    //! Insert Multiple users
+    // insertMultiplesUsersMenu();
+
+    //! Delete user
     char searchId[NUM_DIGITS + 1];
     printf("Digite o ID do usuario que deseja buscar: ");
     scanf("%15s", searchId);
-    getUserById(searchId);
+    deleteUser(searchId);
 
     return 0;
 }
