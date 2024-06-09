@@ -94,41 +94,6 @@ void getUserById(const char *id)
     fclose(file);
 }
 
-// void deleteUser(const char *id)
-// {
-//     FILE *file = fopen(FILE_NAME, "r+");
-//     if (file == NULL)
-//     {
-//         printf("Erro ao abrir o arquivo.\n");
-//         return;
-//     }
-
-//     char line[1024];
-//     char currentId[16];
-//     char name[101];
-//     int age;
-//     double balance;
-
-//     while (fgets(line, sizeof(line), file))
-
-//     {
-//         if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
-//         {
-
-//             if (strcmp(currentId, id) == 0)
-//             {
-//                 fprintf(file, "asd");
-//                 fclose(file);
-//                 printf("Usuario %s removido com sucesso", currentId);
-//                 return;
-//             }
-//         }
-//     }
-
-//     printf("ID não encontrado.\n");
-//     fclose(file);
-// }
-
 void deleteUser(const char *id)
 {
     FILE *file = fopen(FILE_NAME, "r");
