@@ -6,19 +6,46 @@
 
 #define NUM_DIGITS 15
 #define MAX_NAME_LENGTH 100
-#define FILE_NAME "uaibank.txt"
+#define FILE_NAME "../uaibank.txt"
+#define LOG_FILE "../log.txt"
+
+typedef struct
+{
+    char id[NUM_DIGITS + 1];
+    char name[100];
+    int age;
+    double balance;
+} User;
 
 int isNameValid(const char *name)
 {
     return strlen(name) <= MAX_NAME_LENGTH;
 }
 
+void logMessage(const char *message)
+{
+    FILE *file = fopen(LOG_FILE, "a");
+    if (file == NULL)
+    {
+        fprintf(stderr, "Erro ao abrir o arquivo de log.\n");
+        return;
+    }
+
+    fprintf(file, "%s\n", message);
+
+    fclose(file);
+
+    printf("%s\n", message);
+}
+
 char *randomId()
 {
+    char message[255];
     char *id = (char *)malloc((NUM_DIGITS + 1) * sizeof(char));
     if (id == NULL)
     {
-        fprintf(stderr, "Erro ao alocar memoria");
+        snprintf(message, sizeof(message), "Erro: Nao foi possivel gerar um ID");
+        logMessage(message);
         return NULL;
     }
     srand(time(NULL));
@@ -35,7 +62,7 @@ char *randomId()
 
 void insertUser(char *id, const char *name, int age, double balance)
 {
-
+    char message[255];
     if (!isNameValid(name))
     {
         fprintf(stderr, "Erro: Nome excede %d caracteres.\n", MAX_NAME_LENGTH);
@@ -45,54 +72,198 @@ void insertUser(char *id, const char *name, int age, double balance)
     FILE *file = fopen(FILE_NAME, "a");
     if (file == NULL)
     {
-        fprintf(stderr, "Erro ao salvar dados");
+        snprintf(message, sizeof(message), "Erro: Erro ao salvar os dados");
+        logMessage(message);
         return;
     }
-    fprintf(file, "ID\"%s\" \"%s\" \"%d\" \"%.2f\"\n", id, name, age, balance);
+
+    fprintf(file, "\"%s\" \"%s\" \"%d\" \"%.2f\"\n", id, name, age, balance);
+    snprintf(message, sizeof(message), "Usuario inserido com id %s.", id);
+    logMessage(message);
     fclose(file);
 }
 
-void getUserById(const char *id)
+void transferMoney(const char *senderId, const char *receiverId, double amount)
 {
+    char message[255];
+    User user;
+
+    // Abrir o arquivo original para leitura
     FILE *file = fopen(FILE_NAME, "r");
     if (file == NULL)
     {
-        printf("Erro ao abrir o arquivo.\n");
+        snprintf(message, sizeof(message), "Erro: Erro ao abrir o arquivo");
+        logMessage(message);
+        return;
+    }
+
+    // Abrir um arquivo temporário para escrita
+    FILE *tempFile = fopen("temp.txt", "w");
+    if (tempFile == NULL)
+    {
+        snprintf(message, sizeof(message), "Erro: Erro ao criar um arquivo temporario");
+        logMessage(message);
+        fclose(file);
         return;
     }
 
     char line[1024];
-    char currentId[16];
-    char name[101];
-    int age;
-    double balance;
+    int senderFound = 0;
+    int receiverFound = 0;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", user.id, user.name, &user.age, &user.balance) == 4)
+        {
+            if (strcmp(user.id, senderId) == 0)
+            {
+                senderFound = 1;
+                if (user.balance >= amount)
+                {
+                    user.balance -= amount;
+                }
+                else
+                {
+                    snprintf(message, sizeof(message), "Erro: O usuario id %s, nao possui saldo o suficiente", senderId);
+                    logMessage(message);
+                    fclose(file);
+                    fclose(tempFile);
+                    remove("temp.txt");
+                    return;
+                }
+            }
+            else if (strcmp(user.id, receiverId) == 0)
+            {
+                receiverFound = 1;
+                user.balance += amount;
+            }
+
+            fprintf(tempFile, "\"%s\" \"%s\" \"%d\" \"%.2f\"\n", user.id, user.name, user.age, user.balance);
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (senderFound && receiverFound)
+    {
+        remove(FILE_NAME);
+        rename("temp.txt", FILE_NAME);
+        snprintf(message, sizeof(message), "Transferencia de %.2f do usuario %s para o usuario %s, foi feita com sucesso", amount, senderId, receiverId);
+        logMessage(message);
+    }
+    else
+    {
+        remove("temp.txt");
+        if (!senderFound)
+        {
+            snprintf(message, sizeof(message), "Erro: ID do remetente %s, nao foi encontrado", senderId);
+            logMessage(message);
+        }
+        if (!receiverFound)
+        {
+            snprintf(message, sizeof(message), "Erro: ID do destinatario %s, nao foi encontrado", receiverId);
+            logMessage(message);
+        }
+    }
+}
+
+void getUserById(const char *id)
+{
+    char message[255];
+    User user;
+    FILE *file = fopen(FILE_NAME, "r");
+    if (file == NULL)
+    {
+        snprintf(message, sizeof(message), "Erro: Erro ao abrir o arquivo");
+        logMessage(message);
+        return;
+    }
+
+    char line[1024];
 
     while (fgets(line, sizeof(line), file))
 
     {
-      if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", user.id, user.name, &user.age, &user.balance) == 4)
         {
 
-          // ESTA FUNCIONANDO ESSA BUDEGA, POREM É NECESSARIO CORRIGIR A FORMA DE RECEBIMENTO DO ID
-          printf("%s \n", currentId);
-          printf("%s \n", id);
-            if (strcmp(currentId, id) == 0)
+            if (strcmp(user.id, id) == 0)
             {
-                printf("ID: %s\n", currentId);
-                printf("Nome: %s\n", name);
-                printf("Idade: %d\n", age);
-                printf("Saldo: %.2f\n", balance);
+                printf("ID: %s\n", user.id);
+                printf("Nome: %s\n", user.name);
+                printf("Idade: %d\n", user.age);
+                printf("Saldo: %.2f\n", user.balance);
+
+                snprintf(message, sizeof(message), "Usuario do ID %s tem saldo de %.2f", user.id, user.balance);
+                logMessage(message);
                 fclose(file);
                 return;
             }
-
         }
     }
 
-    printf("ID não encontrado.\n");
+    snprintf(message, sizeof(message), "Erro: ID %s nao encontrado", id);
+    logMessage(message);
     fclose(file);
 }
 
+void deleteUser(const char *id)
+{
+    char message[255];
+    User user;
+    FILE *file = fopen(FILE_NAME, "r");
+    if (file == NULL)
+    {
+        snprintf(message, sizeof(message), "Erro: Erro ao abrir o arquivo");
+        logMessage(message);
+        return;
+    }
+
+    FILE *tempFile = fopen("temp.txt", "w");
+    if (tempFile == NULL)
+    {
+        //Erro ao criar o arquivo temporario, devido a permissões por exemplo
+        snprintf(message, sizeof(message), "Erro: Nao foi possivel excluir o usuario %s", id);
+        logMessage(message);
+        fclose(file);
+        return;
+    }
+
+    char line[1024];
+
+    int found = 0;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", user.id, user.name, &user.age, &user.balance) == 4)
+        {
+            if (strcmp(user.id, id) == 0)
+            {
+                found = 1;
+            }else{
+                fputs(line, tempFile);
+            }
+        }
+    }
+
+    fclose(file);
+    fclose(tempFile);
+
+    if (found)
+    {
+        remove(FILE_NAME);
+        rename("temp.txt", FILE_NAME);
+        snprintf(message, sizeof(message), "Usuario %s removido com sucesso", id);
+        logMessage(message);
+    }
+    else
+    {
+        remove("temp.txt");
+        snprintf(message, sizeof(message), "Erro: Usuario %s nao encontrado", id);
+        logMessage(message);
+    }
+}
 
 void getUserDetails(char *name, int *age, double *balance)
 {
@@ -148,21 +319,118 @@ int insertMultiplesUsersMenu()
         }
 
         insertUser(id, name, age, balance);
-
         free(id);
-        return 0;
     }
 
     return 0;
 }
 
-
 int main()
 {
-    char searchId[NUM_DIGITS + 1];
-    printf("Digite o ID do usuario que deseja buscar: ");
-    scanf("%15s", searchId);
-    getUserById(searchId);
+    int opcao;
+    char userName[MAX_NAME_LENGTH + 1];
+    int age;
+    double balance;
+
+    do
+    {
+        printf("\n=== MENU ===\n");
+        printf("1. Pesquisar usuario por ID\n");
+        printf("2. Deletar usuario por ID\n");
+        printf("3. Inserir um unico usuario\n");
+        printf("4. Inserir varios usuarios\n");
+        printf("5. Realizar transferencia\n");
+        printf("6. Sair\n");
+
+        printf("Escolha uma opcao (1-6): ");
+        if (scanf("%d", &opcao) != 1)
+        {
+            fprintf(stderr, "Erro ao ler a opcao do menu\n");
+            exit(1);
+        }
+        getchar();
+
+        switch (opcao)
+        {
+        case 1:
+        {
+            char searchId[NUM_DIGITS + 1];
+            printf("Digite o ID do usuario que deseja buscar: ");
+            if (scanf("%15s", searchId) != 1)
+            {
+                fprintf(stderr, "Erro ao ler ID do usuario\n");
+                exit(1);
+            }
+            getUserById(searchId);
+            break;
+        }
+        case 2:
+        {
+            char deleteId[NUM_DIGITS + 1];
+            printf("Digite o ID do usuario que deseja deletar: ");
+            if (scanf("%15s", deleteId) != 1)
+            {
+                fprintf(stderr, "Erro ao ler ID do usuario\n");
+                exit(1);
+            }
+            deleteUser(deleteId);
+            break;
+        }
+        case 3:
+            getUserDetails(userName, &age, &balance);
+
+            char *id = randomId();
+            if (id == NULL)
+            {
+                fprintf(stderr, "Erro ao gerar ID para o usuario\n");
+                break;
+            }
+
+            insertUser(id, userName, age, balance);
+            free(id);
+            break;
+        case 4:
+            insertMultiplesUsersMenu();
+            break;
+        case 5:
+        {
+            char remetenteId[NUM_DIGITS + 1];
+            printf("Digite o ID do usuario remetente: ");
+            if (scanf("%15s", remetenteId) != 1)
+            {
+                fprintf(stderr, "Erro ao ler ID do usuario remetente\n");
+                exit(1);
+            }
+
+            char destinoId[NUM_DIGITS + 1];
+            printf("Digite o ID do destinatario: ");
+            if (scanf("%15s", destinoId) != 1)
+            {
+                fprintf(stderr, "Erro ao ler ID do destinatario\n");
+                exit(1);
+            }
+
+            float transferAmount = 0.0;
+            printf("Digite a quantia a ser transferida: ");
+            if (scanf("%f", &transferAmount) != 1)
+            {
+                fprintf(stderr, "Erro ao ler a quantia a ser transferida\n");
+                exit(1);
+            }
+
+            transferMoney(remetenteId, destinoId, transferAmount);
+            break;
+        }
+        case 6:
+            printf("Encerrando o programa...\n");
+            break;
+        default:
+            printf("Opcao invalida. Encerrando o programa...\n");
+            opcao = 6;
+            break;
+        }
+
+    } while (opcao != 6);
 
     return 0;
 }
