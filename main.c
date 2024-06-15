@@ -9,6 +9,13 @@
 #define FILE_NAME "../uaibank.txt"
 #define LOG_FILE "../log.txt"
 
+typedef struct
+{
+    char id[NUM_DIGITS + 1];
+    char name[100];
+    int age;
+    double balance;
+} User;
 
 int isNameValid(const char *name)
 {
@@ -79,6 +86,7 @@ void insertUser(char *id, const char *name, int age, double balance)
 void transferMoney(const char *senderId, const char *receiverId, double amount)
 {
     char message[255];
+    User user;
 
     // Abrir o arquivo original para leitura
     FILE *file = fopen(FILE_NAME, "r");
@@ -100,24 +108,19 @@ void transferMoney(const char *senderId, const char *receiverId, double amount)
     }
 
     char line[1024];
-    char currentId[16];
-    char name[101];
-    int age;
-    double balance;
-
     int senderFound = 0;
     int receiverFound = 0;
 
     while (fgets(line, sizeof(line), file))
     {
-        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", user.id, user.name, &user.age, &user.balance) == 4)
         {
-            if (strcmp(currentId, senderId) == 0)
+            if (strcmp(user.id, senderId) == 0)
             {
                 senderFound = 1;
-                if (balance >= amount)
+                if (user.balance >= amount)
                 {
-                    balance -= amount;
+                    user.balance -= amount;
                 }
                 else
                 {
@@ -129,13 +132,13 @@ void transferMoney(const char *senderId, const char *receiverId, double amount)
                     return;
                 }
             }
-            else if (strcmp(currentId, receiverId) == 0)
+            else if (strcmp(user.id, receiverId) == 0)
             {
                 receiverFound = 1;
-                balance += amount;
+                user.balance += amount;
             }
 
-            fprintf(tempFile, "\"%s\" \"%s\" \"%d\" \"%.2f\"\n", currentId, name, age, balance);
+            fprintf(tempFile, "\"%s\" \"%s\" \"%d\" \"%.2f\"\n", user.id, user.name, user.age, user.balance);
         }
     }
 
@@ -168,6 +171,7 @@ void transferMoney(const char *senderId, const char *receiverId, double amount)
 void getUserById(const char *id)
 {
     char message[255];
+    User user;
     FILE *file = fopen(FILE_NAME, "r");
     if (file == NULL)
     {
@@ -177,25 +181,21 @@ void getUserById(const char *id)
     }
 
     char line[1024];
-    char currentId[16];
-    char name[101];
-    int age;
-    double balance;
 
     while (fgets(line, sizeof(line), file))
 
     {
-        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", user.id, user.name, &user.age, &user.balance) == 4)
         {
 
-            if (strcmp(currentId, id) == 0)
+            if (strcmp(user.id, id) == 0)
             {
-                printf("ID: %s\n", currentId);
-                printf("Nome: %s\n", name);
-                printf("Idade: %d\n", age);
-                printf("Saldo: %.2f\n", balance);
+                printf("ID: %s\n", user.id);
+                printf("Nome: %s\n", user.name);
+                printf("Idade: %d\n", user.age);
+                printf("Saldo: %.2f\n", user.balance);
 
-                snprintf(message, sizeof(message), "Usuario do ID %s tem saldo de %.2f", currentId, balance);
+                snprintf(message, sizeof(message), "Usuario do ID %s tem saldo de %.2f", user.id, user.balance);
                 logMessage(message);
                 fclose(file);
                 return;
@@ -211,6 +211,7 @@ void getUserById(const char *id)
 void deleteUser(const char *id)
 {
     char message[255];
+    User user;
     FILE *file = fopen(FILE_NAME, "r");
     if (file == NULL)
     {
@@ -230,18 +231,14 @@ void deleteUser(const char *id)
     }
 
     char line[1024];
-    char currentId[16];
-    char name[101];
-    int age;
-    double balance;
 
     int found = 0;
 
     while (fgets(line, sizeof(line), file))
     {
-        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", currentId, name, &age, &balance) == 4)
+        if (sscanf(line, "\"%15[^\"]\" \"%99[^\"]\" \"%d\" \"%lf\"", user.id, user.name, &user.age, &user.balance) == 4)
         {
-            if (strcmp(currentId, id) == 0)
+            if (strcmp(user.id, id) == 0)
             {
                 found = 1;
             }else{
