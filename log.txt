@@ -1,0 +1,18 @@
+Usuario do ID 6486285 tem saldo de 3646.000000
+Usuario 6487680 removido com sucesso
+Usuario do ID 6486285 tem saldo de 456.360000
+Usuario do ID 6486285 tem saldo de 478.300000
+Usuario do ID 6486285 tem saldo de 478.300000
+Usuario do ID 499436934805458 tem saldo de 478.300000
+Usuario do ID 154159914719997 tem saldo de 687.690000
+Usuario 337228697197099 removido com sucesso
+Usuario inserido com id 523630425314300.
+Usuario inserido com id 748169737635879.
+Usuario inserido com id 207254824945172.
+Erro: O usuario id 207254824945172, nao possui saldo o suficiente
+Transferencia de 15.150000 do usuario 823290047644593 para o usuario 606017615158441, foi feita com sucesso
+Usuario do ID 523630425314300 tem saldo de 693
+Usuario do ID 748169737635879 tem saldo de 487
+Usuario do ID 523630425314300 tem saldo de 693.00
+Usuario do ID 402865444828240 tem saldo de 51.94
+Transferencia de 156.99 do usuario 656165504647481 para o usuario 823290047644593, foi feita com sucesso
