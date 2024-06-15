@@ -16,3 +16,6 @@ Usuario do ID 748169737635879 tem saldo de 487
 Usuario do ID 523630425314300 tem saldo de 693.00
 Usuario do ID 402865444828240 tem saldo de 51.94
 Transferencia de 156.99 do usuario 656165504647481 para o usuario 823290047644593, foi feita com sucesso
+Usuario do ID 371586829170791 tem saldo de 456.36
+Usuario inserido com id 575291398731022.
+Usuario do ID 708224543021242 tem saldo de 3646.00
